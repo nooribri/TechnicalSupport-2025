@@ -1,0 +1,579 @@
+ <!DOCTYPE html>
+<html lang="ar">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<meta charset="UTF-8">
+<title>تقرير الدعم الفني</title>
+<style>
+  body {
+    font-family: 'Cairo', sans-serif;
+    margin: 20px;
+    background-color: #fafafa;
+  }
+
+  h2, h3 {
+    text-align: center;
+    margin: 5px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 13px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  th, td {
+    border: 1px solid #e0e7ff;
+    padding: 5px 6px;
+  }
+
+  /* الصف العلوي (عنوان رئيسي) */
+  thead tr:first-child {
+    background: #8eb6e6;  /* أزرق سماوي فاتح */
+    color: #0f172a;       /* كتابة داكنة لقراءة أوضح */
+    font-size: 14px;
+  }
+
+  /* صف عناوين الأعمدة */
+  thead tr:nth-child(2) {
+    background: #cddffd;  /* أزرق أفتح */
+    font-weight: 600;
+  }
+
+  /* صفوف الزوجية */
+  tbody tr:nth-child(even) {
+    background: #f7fbff;  /* رمادي مزرق فاتح جداً */
+  }
+
+  /* تأثير عند المرور بالماوس */
+  tbody tr:hover {
+    background: #e8f3ff;
+    transition: 0.3s;
+  }
+
+  .search-container {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .search-container input {
+    display: inline-block;
+    margin: 5px;
+    padding: 12px 40px 12px 12px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #d0d7ea;
+    width: 320px;
+    direction: rtl;
+  }
+
+  .buttons {
+    margin: 15px 0;
+    text-align: center;
+  }
+
+  button {
+    background-color: #004c91;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    margin: 5px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #006ad1;
+  }
+
+  @media print {
+    .search-container,
+    .buttons {
+      display: none !important;
+    }
+
+    .header,
+    #reportTable {
+      display: block !important;
+      width: 100%;
+    }
+  }
+  .footer-meta {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  font-size: 12px;
+  direction: rtl;
+}
+
+@media print {
+  .footer-meta {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+  }
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 13px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  direction: rtl;   /* 👈 هذا اختياري، بس يضمن أن الجدول نفسه RTL */
+}
+.actions{
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.actions button{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  min-width: 95px;     /* نفس العرض */
+  height: 34px;        /* نفس الارتفاع */
+  padding: 0 10px;
+
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
+}
+
+/* تعديل: أخضر فاتح */
+.actions .btn-edit{
+  background: #b9f6ca;
+  color: #0b3d1a;
+  border-color: #7be39a;
+}
+
+/* حذف: أحمر */
+.actions .btn-delete{
+  background: #ff4d4d;
+  color: #fff;
+  border-color: #ff2f2f;
+}
+
+/* تأثيرات */
+.actions button:hover{
+  filter: brightness(0.96);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+.actions button:active{
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* اختياري: تصغير النص على الشاشات الصغيرة */
+@media (max-width: 700px){
+  .actions button span{ display:none; }
+  .actions button{ min-width: 44px; padding: 0 8px; }
+}
+
+@media print {
+  th.actions-col,
+  td.actions-col {
+    display: none !important;
+  }
+}
+
+</style>
+
+</head>
+<body dir="rtl"></body>
+<div class="container">
+   <div class="header" style="text-align:center;">
+     <img src="image1.png" alt="شعار سلطنة عمان" class="logo" style="width:100px; display:block; margin:auto;"> 
+     <h4 style="margin:0; font-size:18px; color:#556B2F;">هيئة حماية المستهلك</h4> 
+     <h6 style="margin:0; font-size:16px; color:#556B2F;">Consumer Protection Authority</h6>
+      <p style="margin:0; font-size:14px; color:#556B2F;">www.cpa.gov.om</p>
+       <p style="margin:0; font-size:14px; color:#556B2F;">إدارة حماية المستهلك بمحافظة الظاهرة</p>
+       <p style="margin:0; font-size:14px; color:#556B2F;">قسم تقنية المعلومات</p>
+     </div>
+
+     <div style="text-align:center; margin:40px 0 20px 0;"> 
+      <h5 style="margin:5px 0; font-weight:600;">إجراء توفير لوازم تقنية</h5> 
+      <h4 style="margin:5px 0; font-weight:600;">استمارة التقرير الفني للأجهزة (موحد)</h4> 
+    </div>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
+  </div>
+
+  <input type="hidden" id="editRow">
+
+<table id="report1Table">
+  <thead>
+    <tr>
+      <!-- المجموعة الأولى: البيانات الأساسية -->
+      <th colspan="4">البيانات الأساسية</th>
+
+      <!-- أعمدة منفصلة -->
+      <th rowspan="2">تحديد نوع العطل من مقدم الطلب</th>
+      <th rowspan="2">وصف المشكلة الفنية من مقدم الطلب</th>
+      <th rowspan="2">رئيس القسم</th>
+      <th rowspan="2">اسم الموظف المختص</th>
+
+      <!-- المجموعة الثانية: التقرير الفني -->
+     <th colspan="5">التقرير الفني من موظف قسم إدارة العمليات والدعم الفني</th>
+
+
+      <!-- أعمدة منفصلة في النهاية -->
+      <th rowspan="2">رأي رئيس القسم </th>
+     <th rowspan="2" class="actions-col">الإجراء</th>
+
+     
+    </tr>
+    <tr>
+      <!-- الأعمدة تحت "البيانات الأساسية" -->
+      <th>اسم مقدم الطلب</th>
+      <th>القسم</th>
+      <th>تاريخ تقديم الطلب</th>
+      <th>نوع الجهاز</th>
+
+      <!-- الأعمدة تحت "التقرير الفني" -->
+      <th>هل تم حل المشكلة؟</th>
+       <th>تاريخ حل المشكلة</th>
+      <th>الإجراء والتوصيات</th>
+      <th>اسم الموظف المختص</th>
+      
+      <th> رئيس القسم</th>
+      
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+  <div class="buttons">
+    <button onclick="printReport()">🖨️ طباعة التقرير</button>
+   <button onclick="exportToExcel()">تصدير Excel</button>
+    <button type="button" onclick="window.location.href='support.html'">
+  الرجوع
+</button>
+
+  </div>
+</div>
+ <div class="footer-meta">
+  <div>الرمز: SOP-079-03</div>
+  <div>الإصدار: 02 | التاريخ: يوليو 2024</div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwPowkz1zHVl87A0QP5POlK87KLrnhL1Xyey5qjWbGl2x9LYkiSbdKrrPFYv1otleXb4g/exec';
+
+
+function loadReports() {
+  fetch(scriptURL + '?action=getReports&t=' + Date.now())
+    .then(res => res.json())
+    .then(rows => {
+      const tbody = document.querySelector('#report1Table tbody');
+      tbody.innerHTML = '';
+     
+
+
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${r["اسم مقدم الطلب"] || ''}</td>
+          <td>${r["القسم"] || ''}</td>
+          <td>${formatDate(r["تاريخ تقديم الطلب"])}</td>
+          <td>${r["نوع الجهاز"] || ''}</td>
+          <td>${r["تحديد نوع العطل من مقدم الطلب"] || ''}</td>
+          <td>${r["وصف المشكلة الفنية من مقدم الطلب"] || ''}</td>
+          <td>${r["رئيس القسم"] || ''}</td>
+          <td>${r["اسم الموظف المختص"] || ''}</td>
+          <td>${r["هل تم حل المشكلة؟"] || ''}</td>
+          <td>${formatDate(r["تاريخ حل المشكلة"])}</td>
+          <td>${r["الإجراء والتوصيات"] || ''}</td>
+          <td>${r["اسم الموظف المختص (التقرير)"] || ''}</td>
+          <td>${r["رئيس القسم (التقرير)"] || ''}</td>
+          <td>${r["رأي رئيس القسم"] || ''}</td>
+
+         <td class="actions-col">
+    <button class="btn-edit"  data-row="${r.row}">✏️ تعديل</button>
+    <button class="btn-delete" data-row="${r.row}">🗑️ حذف</button>
+  </td>
+`;
+
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(err => console.error('خطأ في تحميل البيانات:', err));
+}
+function deleteByRow_(d) {
+  const sh = sheet_();
+  const rowNum = Number(d.row);
+
+  if (!rowNum || rowNum < 2) {
+    return { status: "error", message: "رقم الصف غير صحيح" };
+  }
+
+  sh.deleteRow(rowNum);
+  return { status: "success" };
+}
+
+document.addEventListener("click", (e) => {
+  const deleteBtn = e.target.closest(".btn-delete");
+  if (!deleteBtn) return;
+  const row = deleteBtn.dataset.row;
+  deleteByRow(row);
+});
+
+
+function deleteByRow(row) {
+  const rowNum = String(row || "").trim();
+  if (!rowNum) {
+    alert("رقم الصف غير معروف، لا يمكن الحذف.");
+    return;
+  }
+
+  if (!confirm(`هل أنت متأكد من حذف هذا السجل (صف رقم ${rowNum})؟`)) return;
+
+  const data = {
+    action: "deleteByRow",
+    row: rowNum
+  };
+
+  fetch(scriptURL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(data)
+  })
+  .then(() => {
+    // ما نقدر نقرأ الرد مع no-cors، لكن نفترض أن الحذف تم بنجاح
+    alert("تم حذف السجل بنجاح ✅");
+    loadReports(); // إعادة تحميل الجدول
+  })
+  .catch(err => {
+    console.error("خطأ في الحذف:", err);
+    alert("حدث خطأ أثناء الحذف، يرجى المحاولة مرة أخرى.");
+  });
+}
+
+
+document.addEventListener("click", (e) => {
+  const editBtn   = e.target.closest(".btn-edit");
+  const deleteBtn = e.target.closest(".btn-delete");
+
+  // ✏️ تعديل
+  if (editBtn) {
+    const row = editBtn.dataset.row;
+    if (!row) return;
+
+    localStorage.setItem('editRow', row);
+    window.location.href = 'index.html'; // مسار صفحة النموذج
+    return;
+  }
+
+  // 🗑️ حذف
+  if (deleteBtn) {
+    const row = deleteBtn.dataset.row;
+    deleteByRow(row);
+    return;
+  }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', loadReports);
+
+function startEdit(row) {
+  const rowNum = Number(row);
+  if (!rowNum) return;
+
+  fetch(scriptURL + '?action=getReports&t=' + Date.now())
+    .then(res => res.json())
+    .then(rows => {
+      const record = rows.find(r => r.row === rowNum);
+      if (!record) {
+        alert("لم يتم العثور على السجل المطلوب للتعديل");
+        return;
+      }
+
+      // دالة صغيرة آمنة لضبط القيمة إذا وُجد العنصر
+      function safeSet(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.value = value || "";
+      }
+
+      // نخزن رقم الصف في الحقل المخفي (لو موجود)
+      safeSet("editRow", rowNum);
+
+      // 🔹 تعبئة بيانات مقدم الطلب (لو الحقول موجودة في الصفحة)
+      safeSet('applicantName',      record["اسم مقدم الطلب"]);
+      safeSet('department',         record["القسم"]);
+      safeSet('requestDate',        record["تاريخ تقديم الطلب"]);
+      safeSet('deviceType',         record["نوع الجهاز"]);
+      safeSet('problemDescription', record["وصف المشكلة الفنية من مقدم الطلب"]);
+
+      // 🔹 تعبئة التقرير الفني (لو الحقول موجودة)
+      safeSet('solutionResolved',       record["هل تم حل المشكلة؟"] || "لا");
+      safeSet('solutionDate',           record["تاريخ حل المشكلة"]);
+      safeSet('actionsRecommendations', record["الإجراء والتوصيات"]);
+      safeSet('techName',               record["اسم الموظف المختص (التقرير)"]);
+      safeSet('headOpinion',            record["رأي رئيس القسم"]);
+
+      // 🔹 تعبئة نوع العطل في الراديو (فقط لو الراديو موجود)
+      const faultValue = record["تحديد نوع العطل من مقدم الطلب"] || "";
+      if (faultValue) {
+        const faultRadio = document.querySelector(`input[name="faultType"][value="${faultValue}"]`);
+        if (faultRadio) faultRadio.checked = true;
+      }
+
+      // 🔹 سكرول للنموذج (لو techForm موجود)
+      const techFormEl = document.getElementById('techForm');
+      if (techFormEl) {
+        techFormEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    })
+    .catch(err => {
+      console.error("خطأ في جلب السجلات للتعديل:", err);
+      alert("حدث خطأ أثناء تحميل بيانات السجل للتعديل.");
+    });
+}
+
+
+
+// تنسيق التاريخ
+function formatDate(s) {
+  const date = parseDateLocal(s);
+  if (isNaN(date)) return s || '';
+  
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+// تحويل النص إلى كائن Date بشكل صحيح مع مراعاة المنطقة الزمنية
+function parseDateLocal(s) {
+  if (!s) return NaN;
+  s = String(s).trim();
+  if (!s) return NaN;
+
+  // 1) لو التاريخ جاي بصيغة ISO ومعه T (مثل 2025-12-08T20:00:00.000Z)
+  // نخليه كما هو ونخليه لـ new Date مباشرة
+  if (s.includes('T')) {
+    const d = new Date(s);  // المتصفح يحوله لتاريخ محلي
+    return isNaN(d) ? NaN : d;
+  }
+
+  // 2) yyyy-mm-dd (بدون وقت)
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+
+  // 3) dd/mm/yyyy أو dd-mm-yyyy
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    const dd = +m[1],
+          mm = +m[2],
+          yyyy = m[3].length === 2 ? +('20' + m[3]) : +m[3];
+    return new Date(yyyy, mm - 1, dd);
+  }
+
+  return NaN;
+}
+
+// بحث عام في الجدول (لو عندك input#searchInput)
+const searchInput = document.getElementById("searchInput");
+if (searchInput) {
+  searchInput.addEventListener("input", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#report1Table tbody tr");
+    rows.forEach(row => {
+      const match = Array.from(row.children).some(cell =>
+        cell.textContent.toLowerCase().includes(filter)
+      );
+      row.style.display = match ? "" : "none";
+    });
+  });
+}
+
+// طباعة
+function printReport() {
+  window.print();
+}
+
+
+// رجوع
+function goBack() {
+  window.history.back();
+}
+
+function exportToExcel() {
+  if (typeof XLSX === "undefined") {
+    alert("مكتبة XLSX غير محمّلة. أضف SheetJS أولاً.");
+    return;
+  }
+
+  const table = document.getElementById("report1Table");
+  if (!table) {
+    alert("لم يتم العثور على الجدول report1Table");
+    return;
+  }
+
+  // نحول الجدول إلى sheet
+  const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+
+  // نحذف عمود "الإجراء" (آخر عمود) لأنه يحتوي أزرار
+  let range = XLSX.utils.decode_range(ws["!ref"]);
+  const actionColIndex = range.e.c; // آخر عمود في الجدول
+
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const addr = XLSX.utils.encode_cell({ r, c: actionColIndex });
+    if (ws[addr]) delete ws[addr];
+  }
+
+  // نحدّث نطاق الشيت ليكون بدون عمود الإجراء
+  range.e.c = range.e.c - 1;
+  ws["!ref"] = XLSX.utils.encode_range(range);
+
+  // ضبط عرض أعمدة بشكل مناسب
+  const colCount = range.e.c - range.s.c + 1;
+  ws["!cols"] = Array.from({ length: colCount }, () => ({ wch: 22 }));
+
+  // إنشاء ملف Excel
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "التقرير الفني للأجهزة");
+
+  const today = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `technical_reports_${today}.xlsx`);
+}
+
+// (اختياري) منع كليك يمين + اختصارات
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'F12') e.preventDefault();
+    if (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) e.preventDefault();
+    if (e.ctrlKey && e.key.toUpperCase() === 'U') e.preventDefault();
+  });
+ 
+   document.getElementById('year').textContent = new Date().getFullYear();
+
+
+</script>
+</body>
+</html>
